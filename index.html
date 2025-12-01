@@ -306,7 +306,7 @@
 
     <div id="toast">操作成功</div>
 
-    <script>
+<script>
         // ⚠️ 上線時請改成 Render 網址
         const API_BASE = 'https://mymediatrek.onrender.com/api'; 
         
@@ -320,13 +320,11 @@
 
         function checkLoginStatus() {
             if (token) {
-                // 已登入：隱藏登入框，顯示主程式
                 document.getElementById('auth-modal').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
                 document.getElementById('logout-btn').style.display = 'block';
                 loadMediaItems();
             } else {
-                // 未登入：顯示登入框，隱藏主程式
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('app-container').style.display = 'none';
                 document.getElementById('logout-btn').style.display = 'none';
@@ -405,6 +403,7 @@
             submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
             submitButton.disabled = true;
 
+            // ★★★ 修正重點：在這裡自動補上 release_year: null ★★★
             const data = {
                 title: document.getElementById('title').value,
                 media_type: document.getElementById('type').value,
@@ -412,8 +411,7 @@
                 progress: document.getElementById('progress').value || null,
                 rating: parseInt(document.getElementById('rating').value) || null,
                 comment: document.getElementById('comment').value || null,
-                // 修正 422 錯誤：確保 release_year 欄位被送出
-                release_year: document.getElementById('release_year') ? (parseInt(document.getElementById('release_year').value) || null) : null
+                release_year: null // 自動補上這個欄位，解決 422 錯誤
             };
 
             const method = currentEditId ? 'PUT' : 'POST';
