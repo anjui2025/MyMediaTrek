@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyMediaTrek | 觀影清單</title>
+    <!-- 引入 Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示庫 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -28,11 +30,12 @@
             padding-bottom: 80px;
             overflow-x: hidden;
         }
-        /* 背景光暈 */
+        /* 背景光暈動畫 */
         .background-blob { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.4; }
         .blob-1 { width: 400px; height: 400px; background: #7000ff; top: -100px; left: -100px; }
         .blob-2 { width: 300px; height: 300px; background: #00d4ff; bottom: 0; right: 0; }
         
+        /* 玻璃擬態通用樣式 */
         .glass-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
@@ -42,33 +45,32 @@
             box-shadow: var(--glass-shadow);
         }
 
-        /* --- 登入 Modal (最上層) --- */
+        /* --- 登入 Modal (最上層顯示) --- */
         #auth-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.9); z-index: 2000;
             display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
         }
         .auth-box {
-            width: 90%; max-width: 400px; padding: 3rem;
-            background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+            width: 90%; max-width: 400px; padding: 2.5rem;
+            background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
             text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .auth-box h2 { color: var(--accent-color); margin-bottom: 0.5rem; font-size: 2rem; }
-        .auth-box p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
+        .auth-box h2 { color: var(--accent-color); margin-bottom: 1.5rem; font-size: 2rem; }
         .auth-box input { 
-            width: 100%; padding: 14px; margin-bottom: 1rem; 
+            width: 100%; padding: 12px; margin-bottom: 1rem; 
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-            color: white; border-radius: 12px; font-size: 1rem;
+            color: white; border-radius: 8px; font-size: 1rem;
         }
         .auth-box button {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent-color), #0066ff);
-            border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer;
-            font-size: 1rem; transition: 0.3s; margin-top: 1rem;
+            width: 100%; padding: 12px; background: var(--accent-color);
+            border: none; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;
+            font-size: 1rem; transition: 0.3s;
         }
-        .auth-box button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3); }
+        .auth-box button:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* --- 主程式區塊 (預設隱藏，登入後顯示) --- */
+        /* --- 主程式區塊 (預設隱藏) --- */
         #app-container { display: none; } 
 
         header { text-align: center; padding: 3rem 1rem 2rem; }
@@ -82,6 +84,7 @@
 
         .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
         
+        /* 表單樣式 */
         .form-card { padding: 2rem; margin-bottom: 3rem; transition: 0.3s; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
         
@@ -97,10 +100,17 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); background: rgba(0, 0, 0, 0.4); }
         option { background-color: #1e293b; color: white; }
         
-        /* 星星評分 */
-        .star-rating-selector { display: flex; gap: 5px; font-size: 1.5rem; cursor: pointer; color: rgba(255,255,255,0.2); }
+        /* 星星評分樣式 */
+        .star-rating-selector {
+            display: flex; gap: 5px; font-size: 1.5rem; cursor: pointer; color: rgba(255,255,255,0.2);
+        }
         .star-rating-selector i { transition: 0.2s; }
-        .star-rating-selector i:hover, .star-rating-selector i.hovered, .star-rating-selector i.selected { color: var(--gold-star); transform: scale(1.1); }
+        .star-rating-selector i:hover,
+        .star-rating-selector i.hovered,
+        .star-rating-selector i.selected {
+            color: var(--gold-star);
+            transform: scale(1.1);
+        }
 
         .btn-submit {
             grid-column: 1 / -1;
@@ -111,7 +121,7 @@
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5); }
         .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* 列表標頭與分類 */
+        /* 列表標頭與分類標籤 */
         .list-header {
             display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
             margin-bottom: 1.5rem; gap: 1rem;
@@ -140,6 +150,7 @@
             box-shadow: 0 2px 10px rgba(0, 212, 255, 0.3);
         }
 
+        /* 卡片網格樣式 */
         .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
         .media-card { display: flex; flex-direction: column; overflow: hidden; transition: 0.3s; }
         .media-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.3); }
@@ -152,17 +163,19 @@
         .card-footer { padding: 1rem 1.25rem; background: rgba(0, 0, 0, 0.1); display: flex; justify-content: flex-end; gap: 8px; }
         
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; backdrop-filter: blur(5px); }
-        .status-To-Watch { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); }
-        .status-Watching { background: rgba(0, 212, 255, 0.15); color: #00d4ff; border: 1px solid rgba(0, 212, 255, 0.3); }
-        .status-Watched { background: rgba(46, 213, 115, 0.15); color: #2ed573; border: 1px solid rgba(46, 213, 115, 0.3); }
+        .status-To-Watch { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+        .status-Watching { background: rgba(0, 212, 255, 0.15); color: #00d4ff; }
+        .status-Watched { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
         
         .rating-stars { color: var(--gold-star); font-size: 0.9rem; }
         .btn-icon { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { background: white; color: black; }
         .btn-delete:hover { background: var(--error-color); color: white; border-color: var(--error-color); }
         
+        /* Toast 通知 */
         #toast { visibility: hidden; min-width: 250px; background: rgba(0, 0, 0, 0.8); color: #fff; text-align: center; border-radius: 50px; padding: 12px 24px; position: fixed; z-index: 3000; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 0.9rem; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 5px 15px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, bottom 0.3s; width: 90%; max-width: 350px; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-muted); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; }
 
         /* 登出按鈕 */
@@ -174,6 +187,7 @@
         }
         #logout-btn:hover { background: var(--error-color); border-color: var(--error-color); }
 
+        /* RWD 手機版適配 */
         @media (max-width: 768px) {
             header { padding: 2rem 1rem; }
             header h1 { font-size: 2rem; }
@@ -181,8 +195,11 @@
             .form-card { padding: 1.5rem; margin-bottom: 2rem; }
             .form-grid { grid-template-columns: 1fr; gap: 1rem; }
             .form-group[style*="span 2"] { grid-column: span 1 !important; }
+            
+            /* 手機版：標題與分類標籤直排 */
             .list-header { flex-direction: column; align-items: flex-start; gap: 12px; }
             .filter-tabs { width: 100%; padding-bottom: 8px; }
+            
             .search-container { margin-bottom: 1.5rem; }
             .media-grid { grid-template-columns: 1fr; gap: 1.2rem; }
         }
@@ -215,32 +232,29 @@
             <p>你的個人觀影航道</p>
         </header>
 
-<div class="container">
-         <div class="glass-panel form-card">
+        <div class="container">
+            
+            <div class="glass-panel form-card">
                 <form id="add-media-form">
                     <div class="form-grid">
                         <div class="form-group" style="grid-column: span 2;">
-                            <label for="title">標題 Title</label>
+                            <label>標題 Title</label>
                             <input type="text" id="title" placeholder="輸入名稱..." required>
                         </div>
                         <div class="form-group">
-                            <label for="type">類型 Type</label>
+                            <label>類型 Type</label>
                             <select id="type" required><option value="Movie">電影 Movie</option><option value="Series">影集 Series</option></select>
                         </div>
                         <div class="form-group">
-                            <label for="status">狀態 Status</label>
+                            <label>狀態 Status</label>
                             <select id="status" required><option value="To Watch">待看</option><option value="Watching">追劇中</option><option value="Watched">已看完</option></select>
                         </div>
                         <div class="form-group">
-                            <label for="progress">進度 Progress</label>
+                            <label>進度 Progress</label>
                             <input type="text" id="progress" placeholder="如: S01E01">
                         </div>
                         
-                        <!-- ★★★ 修正點：新增隱藏欄位以解決 422 錯誤 ★★★ -->
-                        <input type="hidden" id="release_year" value="0">
-                        <!-- ★★★ 修正點結束 ★★★ -->
-
-                        <!-- 互動星星 -->
+                        <!-- 互動星星評分 -->
                         <div class="form-group">
                             <label>評分 Rating</label>
                             <div class="star-rating-selector" id="star-rating-container">
@@ -252,18 +266,22 @@
                             </div>
                             <input type="hidden" id="rating" value="0">
                         </div>
-                       
-                        <!-- 評論 -->
+
+                        <!-- 心得評論 -->
                         <div class="form-group" style="grid-column: span 2;">
-                            <label for="comment">心得 Comment</label>
+                            <label>心得 Comment</label>
                             <textarea id="comment" rows="3" placeholder="寫點什麼..."></textarea>
                         </div>
                         
+                        <!-- 隱藏欄位：確保 release_year 被送出 -->
+                        <input type="hidden" id="release_year" value="0">
+                        
                         <button type="submit" class="btn-submit"><i class="fa-solid fa-plus"></i> 加入清單</button>
-                     </div>
+                    </div>
                 </form>
-             </div>
+            </div>
 
+            <!-- 搜尋框 -->
             <div class="search-container" style="margin-bottom: 30px;">
                 <div class="glass-panel" style="padding: 10px 20px; display: flex; align-items: center; gap: 10px;">
                     <i class="fa-solid fa-search" style="color: var(--text-muted);"></i>
@@ -271,6 +289,7 @@
                 </div>
             </div>
 
+            <!-- 分類標籤 -->
             <div class="list-header">
                 <h2 class="section-title">我的片單</h2>
                 <div class="filter-tabs">
@@ -288,6 +307,7 @@
     <div id="toast">操作成功</div>
 
     <script>
+        // ⚠️ 上線時請改成 Render 網址
         const API_BASE = 'https://mymediatrek.onrender.com/api'; 
         
         let token = localStorage.getItem('token');
@@ -385,15 +405,14 @@
             submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
             submitButton.disabled = true;
 
-        const data = {
+            const data = {
                 title: document.getElementById('title').value,
                 media_type: document.getElementById('type').value,
                 status: document.getElementById('status').value,
                 progress: document.getElementById('progress').value || null,
                 rating: parseInt(document.getElementById('rating').value) || null,
                 comment: document.getElementById('comment').value || null,
-                
-                // release_year，並確保它被解析為數字
+                // 修正 422 錯誤：確保 release_year 欄位被送出
                 release_year: document.getElementById('release_year') ? (parseInt(document.getElementById('release_year').value) || null) : null
             };
 
@@ -450,9 +469,7 @@
                     </div>
                     <div class="card-body">
                         <h3 class="card-title">${item.title}</h3>
-                        <div class="card-meta">
-                            <span>${item.current_progress ? '<i class="fa-solid fa-bars-progress"></i> '+item.current_progress : ''}</span>
-                        </div>
+                        <div class="card-meta"><span>${item.current_progress || ''}</span></div>
                         <div class="rating-stars" style="color:var(--gold-star)">${stars}</div>
                         ${item.comment ? `<div class="card-comment">${item.comment}</div>` : ''}
                     </div>
