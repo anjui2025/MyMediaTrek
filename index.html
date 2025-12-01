@@ -215,27 +215,31 @@
             <p>你的個人觀影航道</p>
         </header>
 
-        <div class="container">
-            <div class="glass-panel form-card">
+<div class="container">
+         <div class="glass-panel form-card">
                 <form id="add-media-form">
                     <div class="form-grid">
                         <div class="form-group" style="grid-column: span 2;">
-                            <label>標題 Title</label>
+                            <label for="title">標題 Title</label>
                             <input type="text" id="title" placeholder="輸入名稱..." required>
                         </div>
                         <div class="form-group">
-                            <label>類型 Type</label>
+                            <label for="type">類型 Type</label>
                             <select id="type" required><option value="Movie">電影 Movie</option><option value="Series">影集 Series</option></select>
                         </div>
                         <div class="form-group">
-                            <label>狀態 Status</label>
+                            <label for="status">狀態 Status</label>
                             <select id="status" required><option value="To Watch">待看</option><option value="Watching">追劇中</option><option value="Watched">已看完</option></select>
                         </div>
                         <div class="form-group">
-                            <label>進度 Progress</label>
+                            <label for="progress">進度 Progress</label>
                             <input type="text" id="progress" placeholder="如: S01E01">
                         </div>
                         
+                        <!-- ★★★ 修正點：新增隱藏欄位以解決 422 錯誤 ★★★ -->
+                        <input type="hidden" id="release_year" value="0">
+                        <!-- ★★★ 修正點結束 ★★★ -->
+
                         <!-- 互動星星 -->
                         <div class="form-group">
                             <label>評分 Rating</label>
@@ -248,17 +252,17 @@
                             </div>
                             <input type="hidden" id="rating" value="0">
                         </div>
-
+                       
                         <!-- 評論 -->
                         <div class="form-group" style="grid-column: span 2;">
-                            <label>心得 Comment</label>
+                            <label for="comment">心得 Comment</label>
                             <textarea id="comment" rows="3" placeholder="寫點什麼..."></textarea>
                         </div>
                         
                         <button type="submit" class="btn-submit"><i class="fa-solid fa-plus"></i> 加入清單</button>
-                    </div>
+                     </div>
                 </form>
-            </div>
+             </div>
 
             <div class="search-container" style="margin-bottom: 30px;">
                 <div class="glass-panel" style="padding: 10px 20px; display: flex; align-items: center; gap: 10px;">
@@ -381,13 +385,16 @@
             submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
             submitButton.disabled = true;
 
-            const data = {
+        const data = {
                 title: document.getElementById('title').value,
                 media_type: document.getElementById('type').value,
                 status: document.getElementById('status').value,
                 progress: document.getElementById('progress').value || null,
                 rating: parseInt(document.getElementById('rating').value) || null,
-                comment: document.getElementById('comment').value || null
+                comment: document.getElementById('comment').value || null,
+                
+                // release_year，並確保它被解析為數字
+                release_year: document.getElementById('release_year') ? (parseInt(document.getElementById('release_year').value) || null) : null
             };
 
             const method = currentEditId ? 'PUT' : 'POST';
