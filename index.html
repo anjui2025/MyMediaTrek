@@ -57,7 +57,16 @@
             background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
             text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .auth-box h2 { color: var(--accent-color); margin-bottom: 1.5rem; font-size: 2rem; }
+        .auth-box h2 { color: var(--accent-color); margin-bottom: 1rem; font-size: 2rem; }
+        
+        /* 修改點 1: 增加這段文字與下方輸入框的距離 */
+        .auth-box p.subtitle { 
+            color: var(--text-muted); 
+            margin-bottom: 2.5rem; /* 拉大距離 */
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
         .auth-box input { 
             width: 100%; padding: 12px; margin-bottom: 1rem; 
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
@@ -213,7 +222,8 @@
     <div id="auth-modal">
         <div class="auth-box">
             <h2>Welcome Back</h2>
-            <p>請輸入帳號密碼以存取您的片單</p>
+            <!-- 修改點 1: 加上 class="subtitle" 以便 CSS 控制距離 -->
+            <p class="subtitle">請輸入帳號密碼以存取您的片單</p>
             <input type="text" id="login-username" placeholder="帳號 Username">
             <input type="password" id="login-password" placeholder="密碼 Password">
             <button onclick="handleLogin()">登入 Login</button>
@@ -247,7 +257,12 @@
                         </div>
                         <div class="form-group">
                             <label>狀態 Status</label>
-                            <select id="status" required><option value="To Watch">待看</option><option value="Watching">追劇中</option><option value="Watched">已看完</option></select>
+                            <!-- 修改點 3: 顯示文字改成中文，但 value 維持英文以配合資料庫 -->
+                            <select id="status" required>
+                                <option value="To Watch">想看的</option>
+                                <option value="Watching">追劇中</option>
+                                <option value="Watched">看完的</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>進度 Progress</label>
@@ -273,7 +288,6 @@
                             <textarea id="comment" rows="3" placeholder="寫點什麼..."></textarea>
                         </div>
                         
-                        <!-- 隱藏欄位：確保 release_year 被送出 -->
                         <input type="hidden" id="release_year" value="0">
                         
                         <button type="submit" class="btn-submit"><i class="fa-solid fa-plus"></i> 加入清單</button>
@@ -293,10 +307,11 @@
             <div class="list-header">
                 <h2 class="section-title">我的片單</h2>
                 <div class="filter-tabs">
+                    <!-- 修改點 3: 按鈕文字中文化，參數維持英文 -->
                     <button class="filter-btn active" onclick="filterByStatus('all', this)">全部</button>
                     <button class="filter-btn" onclick="filterByStatus('Watching', this)">追劇中</button>
-                    <button class="filter-btn" onclick="filterByStatus('To Watch', this)">待看</button>
-                    <button class="filter-btn" onclick="filterByStatus('Watched', this)">已看完</button>
+                    <button class="filter-btn" onclick="filterByStatus('To Watch', this)">想看的</button>
+                    <button class="filter-btn" onclick="filterByStatus('Watched', this)">看完的</button>
                 </div>
             </div>
 
@@ -307,13 +322,20 @@
     <div id="toast">操作成功</div>
 
 <script>
-        // ⚠️ 上線時請改成 Render 網址
+        // ⚠️ 部署時確認這個網址是 Render 的網址
         const API_BASE = 'https://mymediatrek.onrender.com/api'; 
         
         let token = localStorage.getItem('token');
         let allMediaItems = [];
         let currentFilter = 'all';
         let currentEditId = null;
+
+        // 修改點 4: 狀態翻譯對照表 (資料庫英文 -> 介面中文)
+        const statusMap = {
+            'To Watch': '想看的',
+            'Watching': '追劇中',
+            'Watched': '看完的'
+        };
 
         // 初始化檢查
         checkLoginStatus();
@@ -403,7 +425,6 @@
             submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
             submitButton.disabled = true;
 
-            // ★★★ 修正重點：在這裡自動補上 release_year: null ★★★
             const data = {
                 title: document.getElementById('title').value,
                 media_type: document.getElementById('type').value,
@@ -411,26 +432,34 @@
                 progress: document.getElementById('progress').value || null,
                 rating: parseInt(document.getElementById('rating').value) || null,
                 comment: document.getElementById('comment').value || null,
-                release_year: null // 自動補上這個欄位，解決 422 錯誤
+                release_year: null
             };
 
+            // 確保有 currentEditId 時使用 PUT，否則 POST
             const method = currentEditId ? 'PUT' : 'POST';
             const url = currentEditId ? `${API_BASE}/media/${currentEditId}` : `${API_BASE}/media`;
+
+            let isSuccess = false; // 追蹤操作是否成功
 
             try {
                 const res = await fetch(url, { method: method, headers: getHeaders(method), body: JSON.stringify(data) });
                 const json = await res.json();
                 if (res.ok) {
                     showToast(currentEditId ? '更新成功' : '新增成功');
-                    resetForm();
+                    resetForm(); // 表單重置，回到新增模式
                     loadMediaItems();
+                    isSuccess = true; // 標記為成功
                 } else {
                     const msg = json.message || '操作失敗';
                     showToast(msg.includes('清單裡囉') ? `✋ ${msg}` : `❌ ${msg}`, 'error');
                 }
             } catch (err) { showToast('操作失敗', 'error'); } 
             finally {
-                submitButton.innerHTML = originalText;
+                // 修正重點：只有在「失敗」的時候才需要還原按鈕文字
+                // 如果成功，resetForm() 已經把按鈕改成「新增」的樣式了，不用還原
+                if (!isSuccess) {
+                    submitButton.innerHTML = originalText;
+                }
                 submitButton.disabled = false;
             }
         });
@@ -456,14 +485,17 @@
             }
 
             items.forEach(item => {
-                const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
+                // 修改點 4: 使用 statusMap 翻譯顯示文字，但保留英文 CSS class
+                const displayStatus = statusMap[item.status] || item.status;
+                
                 const stars = item.rating ? Array(item.rating).fill('<i class="fa-solid fa-star"></i>').join('') + Array(5 - item.rating).fill('<i class="fa-regular fa-star"></i>').join('') : '<span style="color:#888;">無評分</span>';
+                
                 const div = document.createElement('div');
                 div.className = 'media-card glass-panel';
                 div.innerHTML = `
                     <div class="card-header">
                         <span class="card-type">${item.media_type}</span>
-                        <span class="badge status-${item.status.replace(' ', '-')}">${item.status}</span>
+                        <span class="badge status-${item.status.replace(' ', '-')}">${displayStatus}</span>
                     </div>
                     <div class="card-body">
                         <h3 class="card-title">${item.title}</h3>
@@ -472,7 +504,8 @@
                         ${item.comment ? `<div class="card-comment">${item.comment}</div>` : ''}
                     </div>
                     <div class="card-footer">
-                        <button class="btn-icon" onclick="startEdit(${itemJson})"><i class="fa-solid fa-pen"></i></button>
+                        <!-- 修改點 2: 只傳遞 ID，不傳遞整包 JSON，避免引號出錯 -->
+                        <button class="btn-icon" onclick="startEdit(${item.media_id})"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-icon btn-delete" onclick="deleteItem('${item.media_id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
@@ -480,8 +513,13 @@
             });
         }
 
-        function startEdit(item) {
-            currentEditId = item.media_id;
+        // 修改點 2: 透過 ID 從 allMediaItems 抓資料，修復編輯變新增的 Bug
+        function startEdit(id) {
+            // 從已載入的資料中找到那一筆
+            const item = allMediaItems.find(i => i.media_id === id);
+            if (!item) return;
+
+            currentEditId = item.media_id; // 設定全域變數，告訴 submit 這是編輯模式
             document.getElementById('title').value = item.title;
             document.getElementById('type').value = item.media_type;
             document.getElementById('status').value = item.status;
@@ -493,12 +531,14 @@
             const btn = document.querySelector('.btn-submit');
             btn.innerHTML = '<i class="fa-solid fa-rotate"></i> 更新資料';
             btn.style.background = '#f39c12';
+            
+            // 滑動到上方表單
             window.scrollTo({top:0, behavior:'smooth'});
         }
 
         function resetForm() {
             document.getElementById('add-media-form').reset();
-            currentEditId = null;
+            currentEditId = null; // 重置 ID，告訴 submit 這是新增模式
             updateStars(0);
             const btn = document.querySelector('.btn-submit');
             btn.innerHTML = '<i class="fa-solid fa-plus"></i> 加入清單';
