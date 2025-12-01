@@ -16,7 +16,8 @@ load_dotenv()
 DATABASE_URL = os.environ.get('DATABASE_URL') or os.getenv('POSTGRES_URL')
 
 # JWT 密鑰 (Token 加密用)
-JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'default-secret-key-please-change')
+# 修正重點 1: 確保如果沒設定，會有一個預設值，但建議在 Render 環境變數設定它
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-secret-key-change-this-in-prod')
 # 管理員密鑰 (用來建立新帳號)
 ADMIN_MASTER_KEY = os.getenv('ADMIN_MASTER_KEY', 'default-admin-key-please-change')
 
@@ -104,7 +105,7 @@ def login():
         
         if user and check_password_hash(user['password_hash'], password):
             # 發放 Token，裡面藏著 user_id
-            token = create_access_token(identity=user['user_id'])
+            token = create_access_token(identity=str(user['user_id'])) # identity 轉成字串比較安全
             return jsonify({"access_token": token, "username": user['username']}), 200
         else:
             return jsonify({"msg": "帳號或密碼錯誤"}), 401
@@ -145,15 +146,22 @@ def media_api():
             check_sql = "SELECT media_id FROM media_items WHERE title = %s AND user_id = %s"
             cursor.execute(check_sql, (data['title'], current_user_id))
             if cursor.fetchone():
-                return jsonify({"status": "error", "message": f"《{data['title']}》已經在你的清單裡囉！"}), 409
+                return jsonify({"status": "error", "message": f"《{data['title']}》已經在清單裡囉！"}), 409
 
+            # 修正重點 2: 加入 release_year
             sql = """
-                INSERT INTO media_items (user_id, title, media_type, status, current_progress, rating, comment)
-                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING media_id
+                INSERT INTO media_items (user_id, title, media_type, status, current_progress, rating, comment, release_year)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING media_id
             """
             val = (
-                current_user_id, data['title'], data['media_type'], data['status'],
-                data.get('progress'), data.get('rating'), data.get('comment')
+                current_user_id, 
+                data['title'], 
+                data['media_type'], 
+                data['status'],
+                data.get('progress'), 
+                data.get('rating'), 
+                data.get('comment'),
+                data.get('release_year') # 這裡補上了前端傳來的年份
             )
             cursor.execute(sql, val)
             new_id = cursor.fetchone()['media_id']
@@ -162,6 +170,8 @@ def media_api():
 
     except Exception as e:
         if conn: conn.rollback()
+        # 這裡把錯誤印出來，Render 的 Log 才能看到為什麼 422 或 500
+        print(f"Error: {e}") 
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         cursor.close()
@@ -188,15 +198,22 @@ def item_api(media_id):
 
         elif request.method == 'PUT':
             data = request.json
+            # 修正重點 3: 更新時也要加入 release_year
             sql = """
                 UPDATE media_items SET title=%s, media_type=%s, status=%s, 
-                current_progress=%s, rating=%s, comment=%s 
+                current_progress=%s, rating=%s, comment=%s, release_year=%s
                 WHERE media_id=%s AND user_id=%s
             """
             val = (
-                data['title'], data['media_type'], data['status'],
-                data.get('progress'), data.get('rating'), data.get('comment'),
-                media_id, current_user_id
+                data['title'], 
+                data['media_type'], 
+                data['status'],
+                data.get('progress'), 
+                data.get('rating'), 
+                data.get('comment'),
+                data.get('release_year'),
+                media_id, 
+                current_user_id
             )
             cursor.execute(sql, val)
             conn.commit()
@@ -206,10 +223,13 @@ def item_api(media_id):
 
     except Exception as e:
         if conn: conn.rollback()
+        print(f"Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         cursor.close()
         conn.close()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # 這裡的 port 設定是為了配合 Render，它會自動分配 PORT 環境變數
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, port=port)
